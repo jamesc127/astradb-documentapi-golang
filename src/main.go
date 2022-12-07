@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 )
 
 type Astra struct {
@@ -92,66 +93,66 @@ func main() {
 		Token:      "AstraCS:EyINoFwdCWbLqzCUEPJdtWDf:f7161e51e377159d0ae6a5370caec8ac661bdfcad0cf23e82e63968d552a515b",
 	}
 	client := http.Client{}
-	//
-	////People Stuff
-	//personJson, err := os.Open("MOCK_DATA.json")
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//personByteValue, _ := io.ReadAll(personJson)
-	//var people []Person
-	//json.Unmarshal(personByteValue, &people)
-	//for i := 0; i < len(people); i++ {
-	//	person, _ := json.Marshal(people[i])
-	//	req, err := http.NewRequest("POST",
-	//		"https://"+AstraDB.DbId+"-"+AstraDB.Region+".apps.astra.datastax.com/api/rest/v2/namespaces/"+
-	//			AstraDB.Keyspace+"/collections/"+AstraDB.Collection, bytes.NewBuffer(person))
-	//	if err != nil {
-	//		fmt.Print(err.Error())
-	//	}
-	//	req.Header.Add("X-Cassandra-Token", AstraDB.Token)
-	//	req.Header.Add("Content-Type", "application/json")
-	//	resp, err := client.Do(req)
-	//	if err != nil {
-	//		fmt.Print(err.Error())
-	//	}
-	//	body, _ := io.ReadAll(resp.Body)
-	//	fmt.Println("Person " + string(body))
-	//	err = resp.Body.Close()
-	//	if err != nil {
-	//		fmt.Print(err.Error())
-	//	}
-	//}
-	//
-	////Car Stuff
-	//carJson, carErr := os.Open("MOCK_DATA_CAR.json")
-	//if carErr != nil {
-	//	fmt.Println(carErr)
-	//}
-	//carByteValue, _ := io.ReadAll(carJson)
-	//var allCars []CarJson
-	//json.Unmarshal(carByteValue, &allCars)
-	//for i := 0; i < len(allCars); i++ {
-	//	onecar, _ := json.Marshal(allCars[i])
-	//	req, err := http.NewRequest("POST",
-	//		"https://"+AstraDB.DbId+"-"+AstraDB.Region+".apps.astra.datastax.com/api/rest/v2/namespaces/"+
-	//			AstraDB.Keyspace+"/collections/"+AstraDB.Collection, bytes.NewBuffer(onecar))
-	//	if err != nil {
-	//		fmt.Print(err.Error())
-	//	}
-	//	req.Header.Add("X-Cassandra-Token", AstraDB.Token)
-	//	req.Header.Add("Content-Type", "application/json")
-	//	resp, err := client.Do(req)
-	//	if err != nil {
-	//		fmt.Print(err.Error())
-	//	}
-	//	body, _ := io.ReadAll(resp.Body)
-	//	fmt.Println("Car " + string(body))
-	//	err = resp.Body.Close()
-	//	if err != nil {
-	//		fmt.Print(err.Error())
-	//	}
-	//}
+
+	//People Stuff
+	personJson, err := os.Open("MOCK_DATA.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+	personByteValue, _ := io.ReadAll(personJson)
+	var people []Person
+	json.Unmarshal(personByteValue, &people)
+	for i := 0; i < len(people); i++ {
+		person, _ := json.Marshal(people[i])
+		req, err := http.NewRequest("POST",
+			"https://"+AstraDB.DbId+"-"+AstraDB.Region+".apps.astra.datastax.com/api/rest/v2/namespaces/"+
+				AstraDB.Keyspace+"/collections/"+AstraDB.Collection, bytes.NewBuffer(person))
+		if err != nil {
+			fmt.Print(err.Error())
+		}
+		req.Header.Add("X-Cassandra-Token", AstraDB.Token)
+		req.Header.Add("Content-Type", "application/json")
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Print(err.Error())
+		}
+		body, _ := io.ReadAll(resp.Body)
+		fmt.Println("Person " + string(body))
+		err = resp.Body.Close()
+		if err != nil {
+			fmt.Print(err.Error())
+		}
+	}
+
+	//Car Stuff
+	carJson, carErr := os.Open("MOCK_DATA_CAR.json")
+	if carErr != nil {
+		fmt.Println(carErr)
+	}
+	carByteValue, _ := io.ReadAll(carJson)
+	var allCars []CarJson
+	json.Unmarshal(carByteValue, &allCars)
+	for i := 0; i < len(allCars); i++ {
+		onecar, _ := json.Marshal(allCars[i])
+		req, err := http.NewRequest("POST",
+			"https://"+AstraDB.DbId+"-"+AstraDB.Region+".apps.astra.datastax.com/api/rest/v2/namespaces/"+
+				AstraDB.Keyspace+"/collections/"+AstraDB.Collection, bytes.NewBuffer(onecar))
+		if err != nil {
+			fmt.Print(err.Error())
+		}
+		req.Header.Add("X-Cassandra-Token", AstraDB.Token)
+		req.Header.Add("Content-Type", "application/json")
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Print(err.Error())
+		}
+		body, _ := io.ReadAll(resp.Body)
+		fmt.Println("Car " + string(body))
+		err = resp.Body.Close()
+		if err != nil {
+			fmt.Print(err.Error())
+		}
+	}
 
 	//State Query Stuff
 	where := "{\"address.state\":{\"$eq\":\"Texas\"}}"
@@ -162,6 +163,10 @@ func main() {
 	fmt.Println(body)
 
 	where = "{\"car.year\":{\"$gt\":2005}}"
+	body, err = AstraQuery(client, AstraDB, where)
+	fmt.Println(body)
+
+	where = "{\"*.color\":{\"$eq\":\"Blue\"}}"
 	body, err = AstraQuery(client, AstraDB, where)
 	fmt.Println(body)
 
