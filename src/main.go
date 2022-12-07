@@ -65,14 +65,13 @@ func AstraQuery(client http.Client, AstraDB Astra, where string) (string, error)
 	query, queryErr := http.NewRequest("GET", "https://"+AstraDB.DbId+"-"+AstraDB.Region+".apps.astra.datastax.com/api/rest/v2/namespaces/"+
 		AstraDB.Keyspace+"/collections/"+AstraDB.Collection+"?where="+url.QueryEscape(where), nil)
 	if queryErr != nil {
-		fmt.Println(queryErr)
+		return "", queryErr
 	}
 	query.Header.Add("X-Cassandra-Token", AstraDB.Token)
 	queryRes, queryErr := client.Do(query)
 	if queryErr != nil {
 		return "empty", queryErr
 	}
-	defer queryRes.Body.Close()
 	body, bodyErr := io.ReadAll(queryRes.Body)
 	if bodyErr != nil {
 		return "empty", bodyErr
@@ -81,6 +80,7 @@ func AstraQuery(client http.Client, AstraDB Astra, where string) (string, error)
 	if parseErr != nil {
 		return "empty", parseErr
 	}
+	defer queryRes.Body.Close()
 	return response, nil
 }
 
@@ -157,9 +157,6 @@ func main() {
 	//State Query Stuff
 	where := "{\"address.state\":{\"$eq\":\"Texas\"}}"
 	body, err := AstraQuery(client, AstraDB, where)
-	if err != nil {
-		return
-	}
 	fmt.Println(body)
 
 	where = "{\"car.year\":{\"$gt\":2005}}"
