@@ -50,9 +50,6 @@ type CarJson struct {
 	ID int `json:"id"`
 }
 
-//https://github.com/cameronldroberts/golang-api/blob/master/main.go
-//https://levelup.gitconnected.com/consuming-a-rest-api-using-golang-b323602ba9d8
-
 func PrettyString(str []byte) (string, error) {
 	var prettyJSON bytes.Buffer
 	if err := json.Indent(&prettyJSON, str, "", "  "); err != nil {
@@ -80,7 +77,12 @@ func AstraQuery(client http.Client, AstraDB Astra, where string) (string, error)
 	if parseErr != nil {
 		return "empty", parseErr
 	}
-	defer queryRes.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}(queryRes.Body)
 	return response, nil
 }
 
@@ -89,7 +91,7 @@ func main() {
 		DbId:       "ef575c27-6064-40a1-9336-37af9f7a983f",
 		Region:     "us-central1",
 		Keyspace:   "test_keyspace",
-		Collection: "one",
+		Collection: "two",
 		Token:      "AstraCS:EyINoFwdCWbLqzCUEPJdtWDf:f7161e51e377159d0ae6a5370caec8ac661bdfcad0cf23e82e63968d552a515b",
 	}
 	client := http.Client{}
@@ -101,7 +103,10 @@ func main() {
 	}
 	personByteValue, _ := io.ReadAll(personJson)
 	var people []Person
-	json.Unmarshal(personByteValue, &people)
+	err = json.Unmarshal(personByteValue, &people)
+	if err != nil {
+		fmt.Println(err)
+	}
 	for i := 0; i < len(people); i++ {
 		person, _ := json.Marshal(people[i])
 		req, err := http.NewRequest("POST",
@@ -131,7 +136,10 @@ func main() {
 	}
 	carByteValue, _ := io.ReadAll(carJson)
 	var allCars []CarJson
-	json.Unmarshal(carByteValue, &allCars)
+	err = json.Unmarshal(carByteValue, &allCars)
+	if err != nil {
+		fmt.Println(err)
+	}
 	for i := 0; i < len(allCars); i++ {
 		onecar, _ := json.Marshal(allCars[i])
 		req, err := http.NewRequest("POST",
@@ -157,14 +165,17 @@ func main() {
 	//State Query Stuff
 	where := "{\"address.state\":{\"$eq\":\"Texas\"}}"
 	body, err := AstraQuery(client, AstraDB, where)
+	fmt.Println("---- HERE'S THE STATE QUERY ----")
 	fmt.Println(body)
 
 	where = "{\"car.year\":{\"$gt\":2005}}"
 	body, err = AstraQuery(client, AstraDB, where)
+	fmt.Println("---- HERE'S THE CAR YEAR QUERY ----")
 	fmt.Println(body)
 
 	where = "{\"*.color\":{\"$eq\":\"Blue\"}}"
 	body, err = AstraQuery(client, AstraDB, where)
+	fmt.Println("---- HERE'S THE COLOR QUERY ----")
 	fmt.Println(body)
 
 }
