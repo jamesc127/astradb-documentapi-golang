@@ -88,11 +88,11 @@ func AstraQuery(client http.Client, AstraDB Astra, where string) (string, error)
 
 func main() {
 	AstraDB := Astra{
-		DbId:       "ef575c27-6064-40a1-9336-37af9f7a983f",
-		Region:     "us-central1",
-		Keyspace:   "test_keyspace",
-		Collection: "two",
-		Token:      "AstraCS:EyINoFwdCWbLqzCUEPJdtWDf:f7161e51e377159d0ae6a5370caec8ac661bdfcad0cf23e82e63968d552a515b",
+		DbId:       "",
+		Region:     "",
+		Keyspace:   "",
+		Collection: "",
+		Token:      "",
 	}
 	client := http.Client{}
 
