@@ -58,7 +58,7 @@ func PrettyString(str []byte) (string, error) {
 }
 
 func AstraQuery(client http.Client, AstraDB Astra, where string) (string, error) {
-	//WHAT GOES HERE? :-)
+	//TODO WHAT GOES HERE? :-)
 	return "", nil
 }
 
