@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 )
 
@@ -58,17 +59,33 @@ func PrettyString(str []byte) (string, error) {
 }
 
 func AstraQuery(client http.Client, AstraDB Astra, where string) (string, error) {
-	//TODO WHAT GOES HERE? :-)
-	return "", nil
+	query, err := http.NewRequest("GET", "https://"+AstraDB.DbId+"-"+AstraDB.Region+
+		".apps.astra.datastax.com/api/rest/v2/namespaces/"+
+		AstraDB.Keyspace+"/collections/"+AstraDB.Collection+
+		"?where="+url.QueryEscape(where), nil)
+	query.Header.Add("X-Cassandra-Token", AstraDB.Token)
+	queryRes, err := client.Do(query)
+	body, err := io.ReadAll(queryRes.Body)
+	response, err := PrettyString(body)
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			return
+		}
+	}(queryRes.Body)
+	if err != nil {
+		return "", err
+	}
+	return response, nil
 }
 
 func main() {
 	AstraDB := Astra{
-		DbId:       "",
-		Region:     "",
-		Keyspace:   "",
-		Collection: "",
-		Token:      "",
+		DbId:       "c8a1507b-31d9-4044-908b-01dc0482694c",
+		Region:     "us-central1",
+		Keyspace:   "test_ks",
+		Collection: "one",
+		Token:      "AstraCS:IhAZGCrnSOTRjMssZFwcLRYc:d73d62ee035c9cd452653283e6ec524fdc90b8eb8e248c26cefa086cb6bdcb75",
 	}
 	client := http.Client{}
 
