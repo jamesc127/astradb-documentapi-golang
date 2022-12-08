@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 )
 
@@ -59,31 +58,8 @@ func PrettyString(str []byte) (string, error) {
 }
 
 func AstraQuery(client http.Client, AstraDB Astra, where string) (string, error) {
-	query, queryErr := http.NewRequest("GET", "https://"+AstraDB.DbId+"-"+AstraDB.Region+".apps.astra.datastax.com/api/rest/v2/namespaces/"+
-		AstraDB.Keyspace+"/collections/"+AstraDB.Collection+"?where="+url.QueryEscape(where), nil)
-	if queryErr != nil {
-		return "", queryErr
-	}
-	query.Header.Add("X-Cassandra-Token", AstraDB.Token)
-	queryRes, queryErr := client.Do(query)
-	if queryErr != nil {
-		return "empty", queryErr
-	}
-	body, bodyErr := io.ReadAll(queryRes.Body)
-	if bodyErr != nil {
-		return "empty", bodyErr
-	}
-	response, parseErr := PrettyString(body)
-	if parseErr != nil {
-		return "empty", parseErr
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			fmt.Println(err)
-		}
-	}(queryRes.Body)
-	return response, nil
+	//WHAT GOES HERE? :-)
+	return "", nil
 }
 
 func main() {
@@ -96,17 +72,21 @@ func main() {
 	}
 	client := http.Client{}
 
-	//People Stuff
+	//Open the People dataset file
 	personJson, err := os.Open("MOCK_DATA.json")
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(err.Error())
 	}
 	personByteValue, _ := io.ReadAll(personJson)
 	var people []Person
+
+	//Unmarshal the dataset into JSON
 	err = json.Unmarshal(personByteValue, &people)
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	//Load each Person into Astra DB
 	for i := 0; i < len(people); i++ {
 		person, _ := json.Marshal(people[i])
 		req, err := http.NewRequest("POST",
@@ -122,6 +102,7 @@ func main() {
 			fmt.Print(err.Error())
 		}
 		body, _ := io.ReadAll(resp.Body)
+		//Print the Person document ID
 		fmt.Println("Person " + string(body))
 		err = resp.Body.Close()
 		if err != nil {
@@ -129,17 +110,21 @@ func main() {
 		}
 	}
 
-	//Car Stuff
+	//Open the Car dataset file
 	carJson, carErr := os.Open("MOCK_DATA_CAR.json")
 	if carErr != nil {
 		fmt.Println(carErr)
 	}
 	carByteValue, _ := io.ReadAll(carJson)
 	var allCars []CarJson
+
+	//Unmarshal the dataset into JSON
 	err = json.Unmarshal(carByteValue, &allCars)
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	//Load each Car into Astra DB
 	for i := 0; i < len(allCars); i++ {
 		onecar, _ := json.Marshal(allCars[i])
 		req, err := http.NewRequest("POST",
@@ -150,11 +135,15 @@ func main() {
 		}
 		req.Header.Add("X-Cassandra-Token", AstraDB.Token)
 		req.Header.Add("Content-Type", "application/json")
+
 		resp, err := client.Do(req)
 		if err != nil {
 			fmt.Print(err.Error())
 		}
+
 		body, _ := io.ReadAll(resp.Body)
+
+		//Print the Car document ID
 		fmt.Println("Car " + string(body))
 		err = resp.Body.Close()
 		if err != nil {
@@ -162,17 +151,19 @@ func main() {
 		}
 	}
 
-	//State Query Stuff
+	//Where clause that finds all People that live in Texas
 	where := "{\"address.state\":{\"$eq\":\"Texas\"}}"
 	body, err := AstraQuery(client, AstraDB, where)
 	fmt.Println("---- HERE'S THE STATE QUERY ----")
 	fmt.Println(body)
 
+	//Where clause that finds all Cars with a year model greater than 2005
 	where = "{\"car.year\":{\"$gt\":2005}}"
 	body, err = AstraQuery(client, AstraDB, where)
 	fmt.Println("---- HERE'S THE CAR YEAR QUERY ----")
 	fmt.Println(body)
 
+	//Where clause that finds ANY attribute that equals Blue
 	where = "{\"*.color\":{\"$eq\":\"Blue\"}}"
 	body, err = AstraQuery(client, AstraDB, where)
 	fmt.Println("---- HERE'S THE COLOR QUERY ----")
